@@ -20,7 +20,7 @@ def home():
 def make_lyrics():
 
     try:
-        data = request.get_json()
+        data = request.get_json(force=True, silent=True) or {}
 
         theme = data.get("theme", "")
         genre = data.get("genre", "")
