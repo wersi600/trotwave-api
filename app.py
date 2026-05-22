@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
 
 import os
-from flask import Flask, request, jsonify
+from flask import Flask, request
 from openai import OpenAI
 
 app = Flask(__name__)
 
+# 환경변수에서 OPENAI_API_KEY를 자동으로 가져옵니다.
 client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
 
 
@@ -16,6 +17,7 @@ def home():
 
 @app.route("/lyrics", methods=["POST"])
 def make_lyrics():
+    # 코듈라에서 보낸 데이터를 안전하게 JSON으로 읽어옵니다.
     data = request.get_json(force=True, silent=True) or {}
 
     title = data.get("title", "").strip()
@@ -28,7 +30,7 @@ def make_lyrics():
     if not theme:
         return "노래 주제를 입력해주세요."
 
-    # AI에게 제목과 가사를 JSON 형태로 명확히 나누어 출력하라고 프롬프트를 변경합니다.
+    # 사용자가 선택한 곡 길이({length})가 규칙에 유동적으로 반영되도록 수정했습니다.
     prompt = f"""
 너는 한국 대중가요, 트롯, EDM트롯, CCM트롯 가사를 전문으로 만드는 작사가다.
 
@@ -39,14 +41,14 @@ def make_lyrics():
 주제: {theme}
 장르: {genre}
 보컬: {vocal}
-곡 길이: {length}
+곡 길이: {length if length else "3분~3분30초"}
 스타일: {style}
 
 [가사 작성 규칙]
 - 반드시 한국어 가사만 출력
 - [Verse 1], [Chorus], [Verse 2], [Chorus] 형식 사용
 - 가사가 너무 빽빽하지 않게 작성
-- 3분~3분30초 노래에 어울리는 분량
+- 입력된 곡 길이({length if length else "3분~3분30초"}) 노래에 딱 어울리는 분량으로 작성할 것
 - 후렴은 기억하기 쉽게
 - 트롯 선택 시 자연스러운 꺾기와 중년 감성 반영
 - EDM트롯 선택 시 신나는 리듬감과 반복 후렴 반영
