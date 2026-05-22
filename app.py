@@ -6,19 +6,17 @@ from openai import OpenAI
 
 app = Flask(__name__)
 
+# 환경변수에서 API Key를 가져옵니다.
 client = OpenAI(
     api_key=os.environ.get("OPENAI_API_KEY")
 )
-
 
 @app.route("/")
 def home():
     return "TrotWave API running"
 
-
 @app.route("/lyrics", methods=["POST"])
 def make_lyrics():
-
     try:
         data = request.get_json(force=True, silent=True) or {}
 
@@ -28,7 +26,7 @@ def make_lyrics():
         length = data.get("length", "")
         style = data.get("style", "")
 
-        if theme == "":
+        if not theme:
             return "주제를 입력해주세요."
 
         prompt = f"""
@@ -44,7 +42,6 @@ def make_lyrics():
 스타일: {style}
 
 [작성 규칙]
-
 - 반드시 한국어 가사만 출력
 - 설명 금지
 - JSON 금지
@@ -71,23 +68,22 @@ def make_lyrics():
 - 3분~3분30초 분량
 """
 
-        response = client.responses.create(
+        # 올바른 OpenAI API 호출 문법으로 수정함
+        response = client.chat.completions.create(
             model="gpt-4o-mini",
-            input=prompt
+            messages=[
+                {"role": "user", "content": prompt}
+            ]
         )
 
-        lyrics = response.output_text
+        # 결과 텍스트를 가져오는 올바른 방법
+        lyrics = response.choices[0].message.content
 
         return lyrics
 
     except Exception as e:
-        return "오류 발생: " + str(e)
-
-
-@app.route("/music", methods=["POST"])
-def make_music():
-    return "음악 생성 기능 준비중"
-
+        # 에러 발생 시 어떤 에러인지 정확히 반환하도록 설정
+        return f"서버 오류 발생: {str(e)}"
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
